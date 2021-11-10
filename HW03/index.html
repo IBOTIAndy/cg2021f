@@ -38,8 +38,8 @@
 			//有幾個項目就呼叫幾個 addChild
 			//addChild 要比 renderModal 先呼叫
 			so.addChild("繪製出 5 個畫面", 1, true);
-			so.addChild("回答問題", 1, false);
-			so.addChild("可按鍵選擇上 / 下一隻角色", 1, false);
+			so.addChild("回答問題", 1, true);
+			so.addChild("可按鍵選擇上 / 下一隻角色", 1, true);
 			so.addChild("讀取作業 2 儲存的座標點在眼睛上繪製出分割線", 1, false);
 			so.addChild("可選擇當下控制哪個虹膜", 1, false);
 			so.addChild("按滑鼠左鍵控制虹膜移動，右鍵停止", 2, false);
@@ -90,6 +90,97 @@
 		let aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
 		let frustumSize = 30;
 		let camera, camera2, camera3, camera4, camera5;
+		let modelSelect = 0;	//角色選擇
+		let	modelName = "modelMesh";
+		
+		const modelFileList = [
+			"models/mmd/kizunaai/kizunaai.pmx",
+			"models/mmd/るいのれ式物述有栖_配布用フォルダ/物述有栖.pmx",
+			"models/mmd/『天宮こころ(Kokoro Amamiya)』/『天宮こころ(Kokoro Amamiya)』.pmx"
+		];
+
+		document.onkeydown = function(event){
+			console.log('key down: ' + event.key);
+			switch(event.keyCode){
+			// 	case 49:    //Key1
+			// 	    keyDrawing = 1;
+			// 		break;
+			// 	case 50:    //Key2
+			// 	    keyDrawing = 2;
+			// 		break;
+			// 	case 51:    //Key3
+			// 	    keyDrawing = 3;
+			// 		break;
+			// 	case 52:    //Key4
+			// 	    keyDrawing = 4;
+			// 		break;
+			// 	case 81:    //KeyQ 將左眼的座標複製到右眼
+			// 	    // console.log(modelData);
+			// 		drawRightEye();
+			// 		break;
+			// 	case 83:    //KeyS 儲存線段的座標
+			// 	    modelData.location = modelFileList[modelSelect];	//將該model的location存入modelData內
+			// 		//儲存檔案(string: 將json轉為str, fileName: 用編號區分不同model, type: 使用 MINE.type)
+			// 	    saveJson(JSON.stringify(modelData), "model_data_" + modelSelect + ".json", "application/json");
+			// 		break;
+				case 65:    //KeyA 換上一位角色
+					switch(modelSelect){	//切換選擇的model
+						case 0:
+						    modelSelect = 2;
+							break;
+						case 1:
+						    modelSelect = 0;
+							break;
+						case 2:
+						    modelSelect = 1;
+							break;
+					}
+					mmdReload(modelSelect);	//重新讀取model
+					break;
+				case 68:    //KeyD 換下一位角色
+					switch(modelSelect){	//切換選擇的model
+						case 0:
+						    modelSelect = 1;
+							break;
+						case 1:
+						    modelSelect = 2;
+							break;
+						case 2:
+						    modelSelect = 0;
+							break;
+					}
+					mmdReload(modelSelect);	//重新讀取model
+					break;
+				default:
+				    console.log("the key not define. by " + event.key);
+					keyDrawing = 0;
+			}
+		}
+
+		function mmdReload(modelSelect){
+			const loader = new MMDLoader();
+			
+			scene.remove(scene.getObjectByName(modelName));	//刪除原本的model
+			loader.load(modelFileList[modelSelect], function (object) {	//讀取MMD modul
+
+			mesh = object;
+			mesh.name = modelName;
+			mesh.position.y = -10;	//設定modul的y(高度) (腳的底部為0)(ki:-180)
+			mesh.scale.set(1, 1, 1);	//設定縮放比例(x, y, z)(ki: 10,10,1)
+
+			scene.add(mesh);
+
+			}, onProgress, null);
+
+			window.addEventListener('resize', onWindowResize);
+
+			function onProgress(xhr) {
+				if (xhr.lengthComputable) {
+					const percentComplete = xhr.loaded / xhr.total * 100;
+					console.log(Math.round(percentComplete, 2) + '% downloaded');
+				}
+			}
+		}//	mmdReload END
 
 		Ammo().then(function (AmmoLib) {
 
@@ -152,10 +243,13 @@
 
 			const loader = new MMDLoader();
 
-			loader.load(modelFile, function (object) {
+			modelSelect = 0;
+			loader.load(modelFile, function (object) {	//讀取MMD modul
 
 				mesh = object;
-				mesh.position.y = - 10;
+				mesh.name = "modelMesh";
+				mesh.position.y = -10;	//設定modul的y(高度) (腳的底部為0)(ki:-180)
+				mesh.scale.set(1, 1, 1);	//設定縮放比例(x, y, z)(ki: 10,10,1)
 
 				scene.add(mesh);
 
@@ -170,7 +264,7 @@
 
 		function onWindowResize() {
 
-			SCREEN_WIDTH = window.innerWidth;
+			SCREEN_WIDTH = window.innerWidth;	//整個畫面的大小
 			SCREEN_HEIGHT = window.innerHeight;
 			aspect = SCREEN_WIDTH / SCREEN_HEIGHT;
 
@@ -220,6 +314,7 @@
 
 			effect.clear();
 
+			//劃出五個畫面
 			effect.setViewport(0, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT);
 			effect.render(scene, camera);
 
