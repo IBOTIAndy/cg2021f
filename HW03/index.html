@@ -42,7 +42,7 @@
 			so.addChild("可按鍵選擇上 / 下一隻角色", 1, true);
 			so.addChild("讀取作業 2 儲存的座標點在眼睛上繪製出分割線", 1, true);
 			so.addChild("可選擇當下控制哪個虹膜", 1, true);
-			so.addChild("按滑鼠左鍵控制虹膜移動，右鍵停止", 2, false);
+			so.addChild("按滑鼠左鍵控制虹膜移動，右鍵停止", 2, true);
 			so.addChild("複製參數至對應目標參數", 2, false);
 			so.addChild("可儲存虹膜轉動角度", 1, false);
 
@@ -97,6 +97,23 @@
 		let	modelName = "modelMesh";
 		let firstTime = true;
 		let leftSelected = true;
+		let eyeBones = [];
+		var body = document.body;
+		let tempX, tempY;
+		let isLeftEye = true;
+		let eyesSelect = 2;
+		let eyesData = {
+			"location":"",
+			"Right_X_negative_angle":0,
+			"Left_X_negative_angle":0,
+			"Right_X_positive_angle":0,
+			"Left_X_positive_angle":0,
+			"Right_Y_negative_angle":0,
+			"Left_Y_negative_angle":0,
+			"Right_Y_positive_angle":0,
+			"Left_Y_positive_angle":0
+		};
+		let eyeDataList = [];
 		
 		const modelFileList = [
 			"models/mmd/kizunaai/kizunaai.pmx",
@@ -104,37 +121,130 @@
 			"models/mmd/『天宮こころ(Kokoro Amamiya)』/『天宮こころ(Kokoro Amamiya)』.pmx"
 		];
 
+		const eyeBoneList = [
+			[86, 88], 
+			[11, 13], 
+			[49, 51]
+			];
+
+		function moveEye(distance){
+			if(1 <= eyesSelect && eyesSelect <= 4){	//1~4為上下移動
+				if(isLeftEye){
+					mesh.skeleton.bones[eyeBones[0]].rotation.x += distance;	//加上移動距離
+				}
+				else{
+					mesh.skeleton.bones[eyeBones[1]].rotation.x += distance;
+				}
+			}
+			else{	//5~8為左右移動
+				if(isLeftEye){
+					mesh.skeleton.bones[eyeBones[0]].rotation.y -= distance;	//加上移動距離
+				}
+				else{
+					mesh.skeleton.bones[eyeBones[1]].rotation.y -= distance;
+				}
+			}
+
+		}
+
+		function getPosition(e){
+			var mouseWorld = new THREE.Vector3();
+			//取得左上位置(0, 0) 與網頁目前的寬高(width, height) #會根據網頁視窗大小變動
+			const { left, top, width, height } = e.currentTarget.getBoundingClientRect();
+			//console.log(left, top, width, height);
+			mouseWorld.set(	//抓取滑鼠在網頁視窗的相對位置 (不是整個畫布的位置)
+				((e.clientX - left + 1) / width) * 2 - 1,
+				-((e.clientY - top + 1) / height) * 2 + 1,
+				(camera.near + camera.far) / (camera.near - camera.far),
+			);
+			console.log(mouseWorld);
+			if(1 <= eyesSelect && eyesSelect <= 4){	//1~4為上下移動
+				if(tempY == null){	//如果還沒有記錄過
+					tempY = mouseWorld.y;	//第一次先記錄
+				}
+				else{	//已經有上一次的滑鼠位置
+					moveEye(tempY - mouseWorld.y);	//加上移動距離
+					tempY = mouseWorld.y;	//為下次移動準備資料
+				}
+			}
+			else{	//5~8為左右移動
+				if(tempX == null){	//如果還沒有記錄過
+					tempX = mouseWorld.x;	//第一次先記錄
+				}
+				else{	//已經有上一次的滑鼠位置
+					moveEye(tempX - mouseWorld.x);	//加上移動距離
+					tempX = mouseWorld.x;	//為下次移動準備資料
+				}
+			}
+		}
+
+		window.addEventListener('contextmenu', function (e) {	//防止右鍵點擊時 會跳出選單的狀況
+			if (e.button == 2) {
+				e.preventDefault();
+			}
+		}, false);
+
+		document.onmousedown = function(events){	//抓取滑鼠點擊動作
+			console.log('mouse click: ' + events.button);
+			switch(events.button){
+				case 0:	//左鍵
+					body.addEventListener('mousemove', getPosition, false); //在body加上監聽(滑鼠移動時, 呼叫getPosition)					
+					break;
+				case 2:	//右鍵
+					body.removeEventListener('mousemove', getPosition, false); //在body加上監聽(滑鼠移動時, 呼叫getPosition)
+					break;
+				default:
+				    console.log("not mouse");
+			}
+		}
+
 		document.onkeydown = function(event){
 			console.log('key down: ' + event.key);
 			switch(event.keyCode){
 				case 49:    //Key1
+					if(eyesSelect == 1){
+						eyesSelect = 8;
+					}
+					else{
+						eyesSelect -= 1;
+					}
 					if(leftSelected){	//如果正在選擇左眼
 						drawRightEye();
 						cameraChange("right");
+						isLeftEye = false;
 					}
 					else{	//如果正在選擇右眼
 						drawLeftEye();
 						cameraChange("left");
+						isLeftEye = true;
 					}					
 					leftSelected = !leftSelected;
 					break;
+
 				case 50:    //Key2
+					if(eyesSelect == 8){
+						eyesSelect = 1;
+					}
+					else{
+						eyesSelect += 1;
+					}
 					if(leftSelected){	//如果正在選擇左眼
 						drawRightEye();
 						cameraChange("right");
+						isLeftEye = false;
 					}
 					else{	//如果正在選擇右眼
 						drawLeftEye();
 						cameraChange("left");
+						isLeftEye = true;
 					}					
 					leftSelected = !leftSelected;
 					break;
-			// 	case 51:    //Key3
-			// 	    keyDrawing = 3;
-			// 		break;
-			// 	case 52:    //Key4
-			// 	    keyDrawing = 4;
-			// 		break;
+
+				case 51:
+					console.log("now eyesSelect: ", eyesSelect);
+					break;
+
 			// 	case 81:    //KeyQ 將左眼的座標複製到右眼
 			// 	    // console.log(modelData);
 			// 		drawRightEye();
@@ -158,9 +268,12 @@
 					}
 					mmdReload(modelSelect);	//重新讀取model
 					modelEyeData = modelDataList[modelSelect];	//切換eye資料
+					eyeBones = eyeBoneList[modelSelect];
 					drawLeftEye();
 					setCamera();
+					isLeftEye = true;
 					break;
+
 				case 68:    //KeyD 換下一位角色
 					switch(modelSelect){	//切換選擇的model
 						case 0:
@@ -175,9 +288,12 @@
 					}
 					mmdReload(modelSelect);	//重新讀取model
 					modelEyeData = modelDataList[modelSelect];	//切換eye資料
+					eyeBones = eyeBoneList[modelSelect];
 					drawLeftEye();
 					setCamera();
+					isLeftEye = true;
 					break;
+
 				default:
 				    console.log("the key not define. by " + event.key);
 					// keyDrawing = 0;
@@ -306,6 +422,7 @@
 				console.log("model Data List:", modelDataList);
 				
 				modelEyeData = modelDataList[modelSelect];
+				eyeBones = eyeBoneList[modelSelect];
 
 				setCamera();
 				console.log("flag:", firstTime);
