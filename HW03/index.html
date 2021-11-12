@@ -44,7 +44,7 @@
 			so.addChild("可選擇當下控制哪個虹膜", 1, true);
 			so.addChild("按滑鼠左鍵控制虹膜移動，右鍵停止", 2, true);
 			so.addChild("複製參數至對應目標參數", 2, false);
-			so.addChild("可儲存虹膜轉動角度", 1, false);
+			so.addChild("可儲存虹膜轉動角度", 1, true);
 
 			//產生自評表，參數如下所示
 			so.renderModal(
@@ -113,7 +113,10 @@
 			"Right_Y_positive_angle":0,
 			"Left_Y_positive_angle":0
 		};
-		let eyeDataList = [];
+		let eyesDataJson = {"eyesList":[]};
+		let eyesDataList = [];
+		let cameraLoad = 2;
+		let eyeMove = false;
 		
 		const modelFileList = [
 			"models/mmd/kizunaai/kizunaai.pmx",
@@ -188,10 +191,15 @@
 			console.log('mouse click: ' + events.button);
 			switch(events.button){
 				case 0:	//左鍵
+				    eyeMove = true;
 					body.addEventListener('mousemove', getPosition, false); //在body加上監聽(滑鼠移動時, 呼叫getPosition)					
 					break;
 				case 2:	//右鍵
 					body.removeEventListener('mousemove', getPosition, false); //在body加上監聽(滑鼠移動時, 呼叫getPosition)
+					saveEyesData();
+					tempX = null;
+					tempY = null;
+					eyeMove = false;
 					break;
 				default:
 				    console.log("not mouse");
@@ -241,19 +249,17 @@
 					leftSelected = !leftSelected;
 					break;
 
-				case 51:
-					console.log("now eyesSelect: ", eyesSelect);
-					break;
-
 			// 	case 81:    //KeyQ 將左眼的座標複製到右眼
 			// 	    // console.log(modelData);
 			// 		drawRightEye();
 			// 		break;
-			// 	case 83:    //KeyS 儲存線段的座標
-			// 	    modelData.location = modelFileList[modelSelect];	//將該model的location存入modelData內
-			// 		//儲存檔案(string: 將json轉為str, fileName: 用編號區分不同model, type: 使用 MINE.type)
-			// 	    saveJson(JSON.stringify(modelData), "model_data_" + modelSelect + ".json", "application/json");
-			// 		break;
+
+				case 83:    //KeyS 儲存線段的座標
+					eyesDataJson.eyesList = eyesDataList;
+					//儲存檔案(string: 將json轉為str, fileName: 用編號區分不同model, type: 使用 MINE.type)
+				    saveJson(JSON.stringify(eyesDataJson), "eyes_data" + ".json", "application/json");
+					break;
+
 				case 65:    //KeyA 換上一位角色
 					switch(modelSelect){	//切換選擇的model
 						case 0:
@@ -268,10 +274,12 @@
 					}
 					mmdReload(modelSelect);	//重新讀取model
 					modelEyeData = modelDataList[modelSelect];	//切換eye資料
-					eyeBones = eyeBoneList[modelSelect];
+					eyeBones = eyeBoneList[modelSelect];	//eyes的bones編號選擇
+					eyesData = eyesDataList[modelSelect];	//讀取該角色的eyes資料
 					drawLeftEye();
 					setCamera();
 					isLeftEye = true;
+					eyesSelect = 2;
 					break;
 
 				case 68:    //KeyD 換下一位角色
@@ -288,15 +296,66 @@
 					}
 					mmdReload(modelSelect);	//重新讀取model
 					modelEyeData = modelDataList[modelSelect];	//切換eye資料
-					eyeBones = eyeBoneList[modelSelect];
+					eyeBones = eyeBoneList[modelSelect];	//eyes的bones編號選擇
+					eyesData = eyesDataList[modelSelect];	//讀取該角色的eyes資料
 					drawLeftEye();
 					setCamera();
 					isLeftEye = true;
+					eyesSelect = 2;
 					break;
 
 				default:
 				    console.log("the key not define. by " + event.key);
 					// keyDrawing = 0;
+			}
+		}
+
+		function saveEyesData(){
+			switch(eyesSelect){	//1~4 上下(rotation.x), 5~8左右(rotation.y)
+				case 1:	//左上右眼
+					eyesData.Right_X_negative_angle = THREE.MathUtils.radToDeg(mesh.skeleton.bones[eyeBones[1]].rotation.x);
+					break;
+				case 2:	//左上左眼
+					eyesData.Left_X_negative_angle = THREE.MathUtils.radToDeg(mesh.skeleton.bones[eyeBones[0]].rotation.x);
+					break;
+				case 3:	//右上右眼
+					eyesData.Right_X_positive_angle = THREE.MathUtils.radToDeg(mesh.skeleton.bones[eyeBones[1]].rotation.x);
+					break;
+				case 4:	//右上左眼
+					eyesData.Left_X_positive_angle = THREE.MathUtils.radToDeg(mesh.skeleton.bones[eyeBones[0]].rotation.x);
+					break;
+				case 5:	//左下右眼
+					eyesData.Right_Y_negative_angle = THREE.MathUtils.radToDeg(mesh.skeleton.bones[eyeBones[1]].rotation.y);
+					break;
+				case 6:	//左下左眼
+					eyesData.Left_Y_negative_angle = THREE.MathUtils.radToDeg(mesh.skeleton.bones[eyeBones[0]].rotation.y);
+					break;
+				case 7:	//右下右眼
+					eyesData.Right_Y_positive_angle = THREE.MathUtils.radToDeg(mesh.skeleton.bones[eyeBones[1]].rotation.y);
+					break;
+				case 8:	//右下左眼
+					eyesData.Left_Y_positive_angle = THREE.MathUtils.radToDeg(mesh.skeleton.bones[eyeBones[0]].rotation.y);
+					break;
+			}
+			eyesDataList[modelSelect] = eyesData;
+		}
+
+		// 下載檔案至電腦
+		function saveJson(data, fileName, type) {
+			var file = new Blob([data], {type: type});
+			if (window.navigator.msSaveOrOpenBlob) // IE10+
+				window.navigator.msSaveOrOpenBlob(file, fileName);
+			else { // Others
+				var a = document.createElement("a"), 
+				url = URL.createObjectURL(file);
+				a.href = url;
+				a.download = fileName;
+				document.body.appendChild(a);
+				a.click();
+				setTimeout(function() {
+					document.body.removeChild(a);
+					window.URL.revokeObjectURL(url);  
+				}, 0); 
 			}
 		}
 
@@ -396,7 +455,104 @@
 			}
 		}
 
-		
+		function delectLine(){		
+			scene.remove(scene.getObjectByName("Top"));  //先移除原先的線
+			scene.remove(scene.getObjectByName("Bottom"));  //先移除原先的線
+			scene.remove(scene.getObjectByName("Right"));  //先移除原先的線
+			scene.remove(scene.getObjectByName("Left"));  //先移除原先的線
+			scene.remove(scene.getObjectByName("xStrip1"));  //先移除原先的線
+			scene.remove(scene.getObjectByName("xStrip2"));  //先移除原先的線
+			scene.remove(scene.getObjectByName("xStrip3"));  //先移除原先的線
+			scene.remove(scene.getObjectByName("yStrip1"));  //先移除原先的線
+			scene.remove(scene.getObjectByName("yStrip2"));  //先移除原先的線
+			scene.remove(scene.getObjectByName("yStrip3"));  //先移除原先的線
+			scene.remove(scene.getObjectByName("yStrip4"));  //先移除原先的線
+			scene.remove(scene.getObjectByName("yStrip5"));  //先移除原先的線
+			scene.remove(scene.getObjectByName("yStrip6"));  //先移除原先的線
+			scene.remove(scene.getObjectByName("yStrip7"));  //先移除原先的線
+
+		}
+
+		function drawCameraLine(isLeft){
+			if(isLeft == 0){
+				drawLeftEye();
+			}
+			else{
+				drawRightEye();
+			}
+		}
+
+		function readEyesData(cameraSelect){
+			cameraLoad = 1;
+			delectLine();
+			if(eyeMove){
+				drawCameraLine(eyesSelect % 2);
+				return;
+			}
+			if(cameraSelect == 1){
+				drawCameraLine(eyesSelect % 2);
+				if(eyesSelect == 1 || eyesSelect == 2){
+					mesh.skeleton.bones[eyeBones[0]].rotation.x = THREE.MathUtils.degToRad(eyesData.Left_X_negative_angle);
+					mesh.skeleton.bones[eyeBones[0]].rotation.y = 0;
+					mesh.skeleton.bones[eyeBones[1]].rotation.x = THREE.MathUtils.degToRad(eyesData.Right_X_negative_angle);
+					mesh.skeleton.bones[eyeBones[1]].rotation.y = 0;
+				}
+				else if(eyesSelect == 3 || eyesSelect == 4){
+					mesh.skeleton.bones[eyeBones[0]].rotation.x = THREE.MathUtils.degToRad(eyesData.Left_X_positive_angle);
+					mesh.skeleton.bones[eyeBones[0]].rotation.y = 0;
+					mesh.skeleton.bones[eyeBones[1]].rotation.x = THREE.MathUtils.degToRad(eyesData.Right_X_positive_angle);
+					mesh.skeleton.bones[eyeBones[1]].rotation.y = 0;
+				}
+				else if(eyesSelect == 5 || eyesSelect == 6){
+					mesh.skeleton.bones[eyeBones[0]].rotation.x = 0;
+					mesh.skeleton.bones[eyeBones[0]].rotation.y = THREE.MathUtils.degToRad(eyesData.Left_Y_negative_angle);
+					mesh.skeleton.bones[eyeBones[1]].rotation.x = 0;
+					mesh.skeleton.bones[eyeBones[1]].rotation.y = THREE.MathUtils.degToRad(eyesData.Right_Y_negative_angle);
+				}
+				else if(eyesSelect == 7 || eyesSelect == 8){
+					mesh.skeleton.bones[eyeBones[0]].rotation.x = 0;
+					mesh.skeleton.bones[eyeBones[0]].rotation.y = THREE.MathUtils.degToRad(eyesData.Left_Y_positive_angle);
+					mesh.skeleton.bones[eyeBones[1]].rotation.x = 0;
+					mesh.skeleton.bones[eyeBones[1]].rotation.y = THREE.MathUtils.degToRad(eyesData.Right_Y_positive_angle);
+				}
+			}
+			if(cameraSelect == 2){	//左上攝影機
+				if(eyesSelect == 1 || eyesSelect == 2){
+					drawCameraLine(eyesSelect % 2);
+				}
+				mesh.skeleton.bones[eyeBones[0]].rotation.x = THREE.MathUtils.degToRad(eyesData.Left_X_negative_angle);
+				mesh.skeleton.bones[eyeBones[0]].rotation.y = 0;
+				mesh.skeleton.bones[eyeBones[1]].rotation.x = THREE.MathUtils.degToRad(eyesData.Right_X_negative_angle);
+				mesh.skeleton.bones[eyeBones[1]].rotation.y = 0;
+			}
+			else if(cameraSelect == 3){	//右上攝影機
+				if(eyesSelect == 3 || eyesSelect == 4){
+					drawCameraLine(eyesSelect % 2);
+				}
+				mesh.skeleton.bones[eyeBones[0]].rotation.x = THREE.MathUtils.degToRad(eyesData.Left_X_positive_angle);
+				mesh.skeleton.bones[eyeBones[0]].rotation.y = 0;
+				mesh.skeleton.bones[eyeBones[1]].rotation.x = THREE.MathUtils.degToRad(eyesData.Right_X_positive_angle);
+				mesh.skeleton.bones[eyeBones[1]].rotation.y = 0;
+			}
+			else if(cameraSelect == 4){	//左下攝影機
+				if(eyesSelect == 5 || eyesSelect == 6){
+					drawCameraLine(eyesSelect % 2);
+				}
+				mesh.skeleton.bones[eyeBones[0]].rotation.x = 0;
+				mesh.skeleton.bones[eyeBones[0]].rotation.y = THREE.MathUtils.degToRad(eyesData.Left_Y_negative_angle);
+				mesh.skeleton.bones[eyeBones[1]].rotation.x = 0;
+				mesh.skeleton.bones[eyeBones[1]].rotation.y = THREE.MathUtils.degToRad(eyesData.Right_Y_negative_angle);
+			}
+			else if(cameraSelect == 5){	//右下攝影機
+				if(eyesSelect == 7 || eyesSelect == 8){
+					drawCameraLine(eyesSelect % 2);
+				}
+				mesh.skeleton.bones[eyeBones[0]].rotation.x = 0;
+				mesh.skeleton.bones[eyeBones[0]].rotation.y = THREE.MathUtils.degToRad(eyesData.Left_Y_positive_angle);
+				mesh.skeleton.bones[eyeBones[1]].rotation.x = 0;
+				mesh.skeleton.bones[eyeBones[1]].rotation.y = THREE.MathUtils.degToRad(eyesData.Right_Y_positive_angle);
+			}
+		}		
 
 		Ammo().then(function (AmmoLib) {
 
@@ -409,7 +565,7 @@
 		});
 
 		function readModelJson(){
-			console.log("read file...");
+			//console.log("read file...");
 			var dataUrl= "./model_data.json";
 			var xhr = new XMLHttpRequest();
 			xhr.open('GET',dataUrl, true);
@@ -419,13 +575,13 @@
 				var dataset = JSON.parse(this.responseText);
 				//console.log("dataset", dataset);
 				modelDataList = dataset.modellist;
-				console.log("model Data List:", modelDataList);
+				//console.log("model Data List:", modelDataList);
 				
 				modelEyeData = modelDataList[modelSelect];
 				eyeBones = eyeBoneList[modelSelect];
 
 				setCamera();
-				console.log("flag:", firstTime);
+				//console.log("flag:", firstTime);
 				if(firstTime){
 					drawLeftEye();
 					firstTime = false;
@@ -433,7 +589,21 @@
 				console.log("ifend flag:", firstTime);
 				
 			}
-			console.log("read ok.");
+			dataUrl= "./eyes_data.json";
+			xhr = new XMLHttpRequest();
+			xhr.open('GET',dataUrl, true);
+			xhr.send();
+			xhr.onload = function(){
+				console.log("file loading...");
+				var dataset = JSON.parse(this.responseText);
+				//console.log("dataset", dataset);
+				eyesDataList = dataset.eyesList;
+				//console.log("model Data List:", modelDataList);
+				eyesData = eyesDataList[modelSelect];
+
+				console.log("ifend flag:", firstTime);				
+			}
+			//console.log("read ok.");
 		}
 
 		function setCamera(){//設定攝影機位置
@@ -572,20 +742,26 @@
 			effect.clear();
 
 			//劃出五個畫面
+			readEyesData(1);
 			effect.setViewport(0, 0, SCREEN_WIDTH / 2, SCREEN_HEIGHT);
 			effect.render(scene, camera);
-
+			
+			readEyesData(2);
 			effect.setViewport(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_WIDTH / 4, SCREEN_HEIGHT / 2);
 			effect.render(scene, camera2);
 
+			readEyesData(3);
 			effect.setViewport(SCREEN_WIDTH / 2 + SCREEN_WIDTH / 4, SCREEN_HEIGHT / 2, SCREEN_WIDTH / 4, SCREEN_HEIGHT / 2);
 			effect.render(scene, camera3);
-
+			
+			readEyesData(4);
 			effect.setViewport(SCREEN_WIDTH / 2, 0, SCREEN_WIDTH / 4, SCREEN_HEIGHT / 2);
 			effect.render(scene, camera4);
-
+			
+			readEyesData(5);
 			effect.setViewport(SCREEN_WIDTH / 2 + SCREEN_WIDTH / 4, 0, SCREEN_WIDTH / 4, SCREEN_HEIGHT / 2);
 			effect.render(scene, camera5);
+			readEyesData(1);
 		}
 	</script>
 
