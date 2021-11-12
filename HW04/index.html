@@ -84,14 +84,13 @@
 			let camera, scene, renderer, effect;
 			let mesh, helper;
 
-			// var standardlist = {
-			// 	eyebrow_troubled_left: 0, eyebrow_troubled_right:0,eyebrow_angry_left:0,eyebrow_angry_right:0,eyebrow_serious_left:0,eyebrow_serious_right:0,eyebrow_happy_left:0,
-			// 	eyebrow_happy_right:0,eyebrow_lowered_left:0,eyebrow_lowered_right:0,eyebrow_raised_left:0,eyebrow_raised_right:0,eye_wink_left:0,
-			// 	eye_wink_right:0,eye_happy_wink_left:0,eye_happy_wink_right:0,eye_relaxed_left:0,eye_relaxed_right:0,eye_unimpressed_left:0,
-			// 	eye_unimpressed_right:0,eye_raised_lower_eyelid_left:0,eye_raised_lower_eyelid_right:0,eye_surprised_left:0,eye_surprised_right:0,iris_small_left:0,iris_small_right:0,
-			// 	mouth_aaa:0,mouth_iii:0,mouth_uuu:0,mouth_eee:0,mouth_ooo:0,mouth_delta:0,mouth_smirk:0,mouth_raised_corner_left:0,mouth_raised_corner_right:0,mouth_lowered_corner_left:0,mouth_lowered_corner_right:0
-			// };
-
+			var standardlist = {
+				eyebrow_troubled_left: 0, eyebrow_troubled_right:0,eyebrow_angry_left:0,eyebrow_angry_right:0,eyebrow_serious_left:0,eyebrow_serious_right:0,eyebrow_happy_left:0,
+				eyebrow_happy_right:0,eyebrow_lowered_left:0,eyebrow_lowered_right:0,eyebrow_raised_left:0,eyebrow_raised_right:0,eye_wink_left:0,
+				eye_wink_right:0,eye_happy_wink_left:0,eye_happy_wink_right:0,eye_relaxed_left:0,eye_relaxed_right:0,eye_unimpressed_left:0,
+				eye_unimpressed_right:0,eye_raised_lower_eyelid_left:0,eye_raised_lower_eyelid_right:0,eye_surprised_left:0,eye_surprised_right:0,iris_small_left:0,iris_small_right:0,
+				mouth_aaa:0,mouth_iii:0,mouth_uuu:0,mouth_eee:0,mouth_ooo:0,mouth_delta:0,mouth_smirk:0,mouth_raised_corner_left:0,mouth_raised_corner_right:0,mouth_lowered_corner_left:0,mouth_lowered_corner_right:0
+			};
 
 			const vpds = [];
 
@@ -322,6 +321,37 @@
 					morphs.open();
 
 				}
+
+			}
+
+			function initgui2(){
+				const gui2 = new GUI();
+				const controls = {};
+				const stdList = gui2.addFolder( 'StdList' );
+
+				for (const key in standardlist){	//設定內部初始值
+					controls[key] = -1;	//初始值設定成-1
+				}
+
+				for(const key in standardlist){
+					stdList.add(controls, key);	//將資料名稱與key值放入list
+				}
+				
+				
+				
+				stdlist.open();	//將list印出
+
+				//-----------
+
+				// initControls();
+				// initKeys();
+				// initPoses();
+				// initMorphs();
+
+				// onChangeMorph();
+				// onChangePose();
+
+				// poses.open();
 
 			}
 
