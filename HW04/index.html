@@ -86,7 +86,7 @@
 			let modelSelect=0;
 			let firstTime = true;
 			let modelName="modelMesh";
-			let modelLocation = [
+			let modelLocation = [	//model的檔案位置
 				"models/mmd/KizunaAI_ver1.01/KizunaAI_ver1.01/kizunaai.pmx",  
         		"models/mmd/るいのれ式物述有栖_配布用フォルダ/物述有栖.pmx",        
         		"models/mmd/『天宮こころ(Kokoro Amamiya)』/『天宮こころ(Kokoro Amamiya)』.pmx"
@@ -124,13 +124,13 @@
 			var stdLocal=[];
 
 			let faceDataJson={"faceList":[]};	//輸出前，將list放入obj以利轉換
-			let faceDataList=[];	//全部角色資料 (使用modelSelect選擇)
-			let faceData = {location:""};	//單隻角色資料
+			let faceDataList=[];				//全部角色資料 (使用modelSelect選擇)
+			let faceData = {location:""};		//單隻角色資料
 
 
 			const vpds = [];
 
-			function showData(){
+			function showData(){	//按下P時，在console顯示資料
 				let i, n;
 				n = textarray.length;
 				console.log("array n: ", n);
@@ -139,7 +139,7 @@
 				}
 			}
 
-			function saveData(){	//
+			function saveData(){	//----------------------------將資料存入modelList (下載, 切換角色時觸發)
 				let i=0, n=0;
 				n = textarray.length;
 				faceData.location = modelLocation[modelSelect];	//寫入location
@@ -147,16 +147,16 @@
 				for(i=0; i < n; i++){
 					faceData[textarray[i]] = stdLocal[i];
 				}
-				faceDataList[modelSelect] = faceData;	//將改好的資料存入list
+				faceDataList[modelSelect] = faceData;			//將改好的資料存入list
 				console.log(faceData);
 			}
 
-			function setJson(){
+			function setJson(){	//------------------------儲存face資料，並將list放入Json obj 以利下載
 				saveData();
-				faceDataJson.faceList = faceDataList;
+				faceDataJson.faceList = faceDataList;	//將list放入 obj
 			}
 				
-			// 下載檔案至電腦
+			// 下載檔案至電腦(資料字串, 檔案名稱, 型態)
 			function saveJson(data, fileName, type) {
 				var file = new Blob([data], {type: type});
 				if (window.navigator.msSaveOrOpenBlob) // IE10+
@@ -179,46 +179,35 @@
 			document.onkeydown = function(event){
 				console.log('key down: ' + event.key);
 				switch(event.keyCode){
-					// case 49:    //Key1
-					//     keyDrawing = 1;
-					// 	break;
-					// case 50:    //Key2
-					//     keyDrawing = 2;
-					// 	break;
-					// case 51:    //Key3
-					//     keyDrawing = 3;
-					// 	break;
-					// case 52:    //Key4
-					//     keyDrawing = 4;
-					// 	break;
 					case 80:	//KeyP 顯示目前所有設定值
 						showData();
 						break;
+
 					case 83:    //KeyS 儲存線段的座標
 						setJson();	//儲存當前角色資料並設定json
 						//儲存檔案(string: 將json轉為str, fileName: 用編號區分不同model, type: 使用 MINE.type)
 						saveJson(JSON.stringify(faceDataJson), "face_data" + ".json", "application/json");
 						break;
+
 					case 65:    //KeyA 換上一位角色
-						// scene.remove(scene.getObjectByName("modelMesh"));	//刪除原本的model
-						changeModel("left");						
+						changeModel("left");
 						break;
+
 					case 68:    //KeyD 換下一位角色
-						// scene.remove(scene.getObjectByName("modelMesh"));	//刪除原本的model
 						changeModel("right");
 						break;
+
 					default:
 						console.log("the key not define. by " + event.key + "(" + event.keyCode + ")");
 				}
 			}
 
-			function changeModel(direction){
-				saveData();	//切換角色前，先儲存這次更改的資料
+			function changeModel(direction){	//--------切換角色
+				saveData();								//切換角色前，先儲存這次更改的資料
 
-				deletedGUI();	//刪除GUI
-				// scene.remove(scene.getObjectByName("modelMesh"));	//刪除原本的model
+				deletedGUI();							//刪除GUI
 
-				switch(direction){	//切換選擇的model
+				switch(direction){						//切換選擇的model
 					case "left":
 						modelSelect--;
 						if(modelSelect == -1){
@@ -234,28 +223,28 @@
 				}				
 				faceData = faceDataList[modelSelect];	//切換face資料
 
-				mmdReload();	//重新讀取model
+				mmdReload();							//重新讀取model
 			}
 
-			function mmdReload(){
+			function mmdReload(){	//----------------------------------------重新讀取model
 				const loader = new MMDLoader();
 				let vpdIndex = 0;
 				
-				scene.remove(scene.getObjectByName(modelName));	//刪除原本的model
+				scene.remove(scene.getObjectByName(modelName));				//刪除原本的model
+
 				loader.load(modelLocation[modelSelect], function (object) {	//讀取MMD modul
-
 				mesh = object;
-				mesh.name = modelName;
-				mesh.position.y = -10;	//設定modul的y(高度) (腳的底部為0)(ki:-180)
-				// mesh.scale.set(1, 1, 1);	//設定縮放比例(x, y, z)(ki: 10,10,1)
+				mesh.name = modelName;										//設定名稱(用來下次刪除)
+				mesh.position.y = -10;										//設定modul的y(高度) (腳的底部為0)(ki:-180)
+				// mesh.scale.set(1, 1, 1);									//設定縮放比例(x, y, z)(ki: 10,10,1)
 
-				scene.add(mesh);
+				scene.add(mesh);											//將model放入場景
 
 				function loadVpd() {
 					const vpdFile = vpdFiles[ vpdIndex ];
 					loader.loadVPD( vpdFile, false, function ( vpd ) {
 						vpds.push( vpd );
-						vpdIndex ++;
+						vpdIndex++;
 						if ( vpdIndex < vpdFiles.length ) {
 							loadVpd();
 						} else {
@@ -267,16 +256,16 @@
 
 				}, onProgress, null);
 
-				window.addEventListener('resize', onWindowResize);
+				window.addEventListener('resize', onWindowResize);			//新增監聽(當視窗大小改變, 呼叫onWindowResize)
 
-				function onProgress(xhr) {
+				function onProgress(xhr) {									//輸出讀取狀態
 					if (xhr.lengthComputable) {
 						const percentComplete = xhr.loaded / xhr.total * 100;
 						console.log(Math.round(percentComplete, 2) + '% downloaded');
 					}
 				}
 
-				function initGui() {
+				function initGui() {	//------------------------------------設定基礎GUI
 					const gui = new GUI();
 					const dictionary = mesh.morphTargetDictionary;
 					const controls = {};
@@ -288,7 +277,7 @@
 						return s.slice( s.lastIndexOf( '/' ) + 1 );
 					}
 
-					function initControls() {
+					function initControls() {	//初始化GUI 數值
 						var count = 0;
 						let i=0;
 						for ( const key in dictionary ) {
@@ -301,7 +290,7 @@
 						}
 					}
 
-					function initKeys() {
+					function initKeys() {		//初始化GUI 名稱
 						let i=0;
 						for ( const key in dictionary ) {
 							keys.push( i + ". " + key );
@@ -309,7 +298,7 @@
 						}
 					}
 
-					function initPoses() {
+					function initPoses() {		//初始化GUI 加上擺姿勢視窗
 						const files = { default: - 1 };
 						for ( let i = 0; i < vpdFiles.length; i ++ ) {
 							files[ getBaseName( vpdFiles[ i ] ) ] = i;
@@ -317,7 +306,7 @@
 						poses.add( controls, 'pose', files ).onChange( onChangePose );
 					}
 
-					function initMorphs() {
+					function initMorphs() {		//初始化GUI 加上調整視窗
 						let i=0;
 						for ( const key in dictionary ) {
 							morphs.add(controls, i + ". " + key, 0.0, 1.0, 0.01 ).onChange( onChangeMorph );
@@ -325,7 +314,7 @@
 						}
 					}
 
-					function onChangeMorph() {
+					function onChangeMorph() {	//當調整視窗(morphs)有數值改變時
 						for ( let i = 0; i < keys.length; i++ ) {
 							const key = keys[i];
 							const value = controls[key];
@@ -333,7 +322,7 @@
 						}
 					}
 
-					function onChangePose() {
+					function onChangePose() {	//當擺姿勢視窗(poses)有數值改變時
 						const index = parseInt( controls.pose );
 						if ( index === - 1 ) {
 							mesh.pose();
@@ -341,63 +330,63 @@
 							helper.pose( mesh, vpds[ index ] );
 						}
 					}
-					initControls();
-					initKeys();
-					initPoses();
-					initMorphs();
+					initControls();	//設定初始數值(values)
+					initKeys();		//設定初始名稱(string)
+					initPoses();	//設定Poses視窗
+					initMorphs();	//設定Morphs視窗
 
 					onChangeMorph();
 					onChangePose();
 
-					poses.open();
-					morphs.open();
+					poses.open();	//印出Poses視窗
+					morphs.open();	//印出Morphs視窗
 				}
 				
-				initgui2();
+				initgui2();	//設定GUI2
 			}//	mmdReload END
 
-			function readModelJson(){	//讀取數值
+			function readModelJson(){	//------------讀取數值
 				//console.log("read file...");
-				var dataUrl= "./face_data.json";
-				var xhr = new XMLHttpRequest();
-				xhr.open('GET',dataUrl, true);
+				var dataUrl= "./face_data.json";	//資料位置
+				var xhr = new XMLHttpRequest();	
+				xhr.open('GET',dataUrl, true);		//開啟資料(取得, 資料位置, 使用非同步)
 				xhr.send();
-				xhr.onload = function(){
+				xhr.onload = function(){			//----------------當資料開始讀取時 執行
 					//console.log("file loading...");
 
-					var dataset = JSON.parse(this.responseText);
+					var dataset = JSON.parse(this.responseText);	//將該資料以text施出，並轉換為Json格式
 					//console.log("dataset", dataset);
 
-					faceDataList = dataset.faceList;
+					faceDataList = dataset.faceList;				//將資料內的 face_list 放入 臉部資料陣列
 					//console.log("faceDataList:", faceDataList);
 
-					faceData = faceDataList[modelSelect];
+					faceData = faceDataList[modelSelect];			//將 臉部資料陣列 依據選取的 model 取出資料
 					//console.log(faceData);
 
 					console.log("read ok.", firstTime);
 					firstTime = false;
-					initgui2();
+					initgui2();	//設定GUI2
 				}
 				//console.log("read ok.");
 			}
 
-			function deletedGUI(){
+			function deletedGUI(){	//--------------------------------------------------------刪除GUI
 				//htmlCollection = doc.getElementsByXXX();
-				let tag = document.getElementsByClassName("dg main a taller-than-window");
+				let tag = document.getElementsByClassName("dg main a taller-than-window");	//選到要刪除的GUI
 				let i=0, n=0;
 				console.log(tag);
-				n = tag.length;
+				n = tag.length;																//將要刪除的數量放入 n
 				for(i=0; i < n; i++){
-					tag[0].parentNode.removeChild(tag[0]);
+					tag[0].parentNode.removeChild(tag[0]);									//開始刪除 (因為刪除後會自動縮減，所以只要不斷地刪除[0]就可以全部刪除)
 				}
-				tag = document.getElementsByClassName("dg main a");
+				tag = document.getElementsByClassName("dg main a");							//因為天宮本身的class name跟其他人不同，所以再多執行一次刪除
 				n = tag.length;
 				for(i=0; i < n; i++){
 					tag[0].parentNode.removeChild(tag[0]);
 				}
 			}
 
-			Ammo().then( function ( AmmoLib ) {
+			Ammo().then( function ( AmmoLib ) {	//該function 只執行一次
 
 				Ammo = AmmoLib;
 
@@ -408,7 +397,7 @@
 
 			} );
 
-			function init() {
+			function init() {	//初始化
 
 				const container = document.createElement( 'div' );
 				document.body.appendChild( container );
@@ -634,50 +623,37 @@
 
 			}
 
-			function initgui2(){
+			function initgui2(){	//初始化GUI2
 				const gui2 = new GUI();
 				const controls = {};
-				const stdList = gui2.addFolder( 'StdList' );
+				const stdList = gui2.addFolder( 'StdList' );	//給予資料夾(下拉選單)名稱
 				let i=0;
 
-				for (const key in standardlist){	//設定內部初始值
-					if(firstTime){
-						controls[key] = -1;	//初始值設定成-1
+				for (const key in standardlist){	//----設定內部初始值
+					if(firstTime){						//如果是第一次設定
+						controls[key] = -1;				//初始值設定成-1
 					}
-					else{
-						controls[key] = faceData[key];
-						stdLocal[i] = controls[key];
+					else{								//不是第一次設定(已將faceData讀取完成)
+						controls[key] = faceData[key];	//將faceData的數值放入
+						stdLocal[i] = controls[key];	//將資料暫存到本地端
 					}
 					i++;
 				}
 
 				for(const key in standardlist){
-					stdList.add(controls, key).onChange(onChangeLocal);	//將資料名稱與key值放入list
+					stdList.add(controls, key).onChange(onChangeLocal);	//將數值(controls)與資料名稱(key)放入list，並加上當改變時 呼叫onChangeLocal
 				}
 				
-				function onChangeLocal(){	//當數值改變時，會直接將數值存入stdLocal[]
+				function onChangeLocal(){	//------------當數值改變時，會直接將數值存入stdLocal[]
 					for(let i=0; i < 37; i++){
-						const key = textarray[i];
-						const value = controls[key];
-						stdLocal[i] = value;
+						const key = textarray[i];		//寫入名稱
+						const value = controls[key];	//寫入數值
+						stdLocal[i] = value;			//將數值寫入暫存區
 					}
-					console.log(stdLocal);
+					console.log(stdLocal);	//檢查用
 				}
 				
-				stdList.open();	//將list印出
-
-				//-----------
-
-				// initControls();
-				// initKeys();
-				// initPoses();
-				// initMorphs();
-
-				// onChangeMorph();
-				// onChangePose();
-
-				// poses.open();
-
+				stdList.open();	//將GUI印出
 			}
 
 			function onWindowResize() {
