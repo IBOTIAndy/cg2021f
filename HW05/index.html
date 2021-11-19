@@ -98,6 +98,7 @@
         let dataJson;           //
         let dataJson_length;    //
         let modelFile_num=1;    //目前選取的模型 (0: 黃髮, 1: 粉法, 2: 藍法)
+        let modelData = {};     //用來存放讀取出來的資料
 
         Ammo().then(function (AmmoLib) {
 
@@ -161,6 +162,8 @@
                 mesh.position.y = -10;
 
                 scene.add(mesh);
+                console.log(mesh.morphTargetDictionary);
+                console.log(mesh.morphTargetInfluences);    //----------------------------------------------
 
                 findeye_index();
                 initGui();
@@ -219,25 +222,89 @@
             }
 
             function initMorphs() {
-                //此程式只有eye_happy_wink_left能控制
-                let i = 0;
+                let temp=-1;
+                let i=0;
                 for (const key in standardlist) {
-                    if (i == 14) {
+                    if(modelData[key] != -1 && temp != modelData[key]){
                         morphs.add(controls, key, 0.0, 1.0, 0.01).onChange(onChangeMorph);
                     }
-                    else {
-                        morphs.add(controls, key, 0.0, 0.0, 0.01).onChange(onChangeMorph);
+                    else{
+                        morphs.add(controls, key, 0.0, 0.0, 0.01);
                     }
+                    temp = modelData[key];
                     i++;
                 }
 
             }
 
             function onChangeMorph() {  //----------------改變數值時，直接對modul做更動
-                //此程式只有eye_happy_wink_left能控制
-                const key = keys[14];
-                const value = controls[key];            //取出GUI的數值
-                mesh.morphTargetInfluences[0] = value;  //直接改動 modul 內的參數
+                // const key = keys[14];
+                // const value = controls[key];            //取出GUI的數值
+                // mesh.morphTargetInfluences[0] = value;  //直接改動 modul 內的參數
+                switch(modelFile_num){
+                    case 0: //物述有栖
+                        mesh.morphTargetInfluences[0] = controls[keys[4]];
+                        mesh.morphTargetInfluences[1] = controls[keys[0]];
+                        mesh.morphTargetInfluences[2] = controls[keys[6]];
+                        mesh.morphTargetInfluences[3] = controls[keys[2]];
+                        mesh.morphTargetInfluences[4] = controls[keys[10]];
+                        mesh.morphTargetInfluences[16] = controls[keys[8]];
+                        mesh.morphTargetInfluences[17] = controls[keys[9]];
+                        mesh.morphTargetInfluences[35] = controls[keys[12]];
+                        mesh.morphTargetInfluences[36] = controls[keys[13]];
+                        mesh.morphTargetInfluences[37] = controls[keys[14]];
+                        mesh.morphTargetInfluences[42] = controls[keys[18]];
+                        mesh.morphTargetInfluences[46] = controls[keys[22]];
+                        mesh.morphTargetInfluences[56] = controls[keys[16]];
+                        mesh.morphTargetInfluences[86] = controls[keys[20]];
+                        mesh.morphTargetInfluences[92] = controls[keys[24]];
+                        mesh.morphTargetInfluences[111] = controls[keys[26]];
+                        mesh.morphTargetInfluences[112] = controls[keys[27]];
+                        mesh.morphTargetInfluences[113] = controls[keys[28]];
+                        mesh.morphTargetInfluences[114] = controls[keys[29]];
+                        mesh.morphTargetInfluences[115] = controls[keys[30]];
+                        mesh.morphTargetInfluences[125] = controls[keys[31]];
+                        mesh.morphTargetInfluences[130] = controls[keys[32]];
+                        mesh.morphTargetInfluences[185] = controls[keys[33]];
+                        mesh.morphTargetInfluences[186] = controls[keys[35]];
+                        mesh.morphTargetInfluences[187] = controls[keys[34]];
+                        mesh.morphTargetInfluences[188] = controls[keys[36]];
+                        break;
+                    case 1: //kizunaai
+                        mesh.morphTargetInfluences[0] = controls[keys[14]];
+                        mesh.morphTargetInfluences[2] = controls[keys[12]];
+                        mesh.morphTargetInfluences[3] = controls[keys[13]];
+                        mesh.morphTargetInfluences[6] = controls[keys[22]];
+                        mesh.morphTargetInfluences[8] = controls[keys[18]];
+                        mesh.morphTargetInfluences[9] = controls[keys[26]];
+                        mesh.morphTargetInfluences[10] = controls[keys[27]];
+                        mesh.morphTargetInfluences[11] = controls[keys[28]];
+                        mesh.morphTargetInfluences[12] = controls[keys[29]];
+                        mesh.morphTargetInfluences[13] = controls[keys[30]];
+                        mesh.morphTargetInfluences[17] = controls[keys[31]];
+                        mesh.morphTargetInfluences[19] = controls[keys[35]];
+                        mesh.morphTargetInfluences[22] = controls[keys[6]];
+                        mesh.morphTargetInfluences[23] = controls[keys[10]];
+                        mesh.morphTargetInfluences[24] = controls[keys[0]];
+                        mesh.morphTargetInfluences[25] = controls[keys[2]];
+                        mesh.morphTargetInfluences[30] = controls[keys[24]];
+                        break;
+                    case 2: //天宮こころ
+                        mesh.morphTargetInfluences[0] = controls[keys[12]];
+                        mesh.morphTargetInfluences[1] = controls[keys[13]];
+                        mesh.morphTargetInfluences[2] = controls[keys[14]];
+                        mesh.morphTargetInfluences[6] = controls[keys[18]];
+                        mesh.morphTargetInfluences[7] = controls[keys[26]];
+                        mesh.morphTargetInfluences[8] = controls[keys[27]];
+                        mesh.morphTargetInfluences[9] = controls[keys[28]];
+                        mesh.morphTargetInfluences[10] = controls[keys[29]];
+                        mesh.morphTargetInfluences[11] = controls[keys[30]];
+                        mesh.morphTargetInfluences[14] = controls[keys[10]];
+                        mesh.morphTargetInfluences[16] = controls[keys[8]];
+                        mesh.morphTargetInfluences[18] = controls[keys[2]];
+                        mesh.morphTargetInfluences[19] = controls[keys[0]];
+                        break;
+                }
             }
 
             initControls();
@@ -270,6 +337,7 @@
                 if(this.readyState == 4 && this.status == 200){ //當他讀取完成並回傳了200(成功)
                     dataJson = JSON.parse(this.responseText);                       //將檔案放入data Json
                     dataJson_length = Object.keys(dataJson.modellist).length - 1;   //檢查data_json有甚麼東西
+                    modelData = dataJson.modellist[modelFile_num];                  //取得目前model的資料
                     console.log("in getJson -> dataJson:", dataJson);               //輸出目前的資料
                     init();                                                         //執行init
                 }
@@ -300,6 +368,8 @@
             mesh.position.y = -10;
 
             scene.add(mesh);
+            console.log(mesh.morphTargetDictionary);
+            console.log(mesh.morphTargetInfluences);
 
             findeye_index();
             initGui();
@@ -310,22 +380,24 @@
         var body = document.body;
         function keyboard(e){
             console.log('key down: ' + e.key);
-            if(e.keyCode == 65 || e.keyCode == 97){     //a or A
-                if(modelFile_num == 0){                 //已經到最左了
-                    modelFile_num = 0;                  //保持不動
+            if(e.keyCode == 65 || e.keyCode == 97){                 //a or A
+                if(modelFile_num == 0){                             //已經到最左了
+                    modelFile_num = 0;                              //保持不動
                 }
                 else{                                   
-                    modelFile_num -= 1;                 //往左邊一次
-                    changeModel();                      //更換model
+                    modelFile_num -= 1;                             //往左邊一次
+                    modelData = dataJson.modellist[modelFile_num];  //將指定的資料內容讀取出來
+                    changeModel();                                  //更換model
                 }
             }
-            if(e.keyCode == 68 || e.keyCode == 100){    //d or D
-                if(modelFile_num == dataJson_length){   //如果已經到最右了
-                    modelFile_num = dataJson_length;    //保持不動
+            if(e.keyCode == 68 || e.keyCode == 100){                //d or D
+                if(modelFile_num == dataJson_length){               //如果已經到最右了
+                    modelFile_num = dataJson_length;                //保持不動
                 }
                 else{
-                    modelFile_num += 1;                 //往右邊一次
-                    changeModel();                      //更換model
+                    modelFile_num += 1;                             //往右邊一次
+                    modelData = dataJson.modellist[modelFile_num];  //將指定的資料內容讀取出來
+                    changeModel();                                  //更換model
                 }
             }
         }   //function建立好後，在body的位置新增一個監聽器(當鍵盤按下時, 呼叫keyboard, )
