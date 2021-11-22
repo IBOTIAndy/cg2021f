@@ -39,7 +39,7 @@
             //addChild 要比 renderModal 先呼叫
             so.addChild("產生 42 個參數的 gui", 4, true);
             so.addChild("按 A 鍵切換為上一隻、按 D 鍵為下一隻 ( gui 跟角色要同時切換 )", 4, true);
-            so.addChild("讀取作業 3 與 作業 4 儲存的 label 表將可控制的 Morph 生成在右邊的 gui", 2, false);
+            so.addChild("讀取作業 3 與 作業 4 儲存的 label 表將可控制的 Morph 生成在右邊的 gui", 2, true);
 
             //產生自評表，參數如下所示
             so.renderModal(
@@ -163,7 +163,7 @@
 
                 scene.add(mesh);
                 console.log(mesh.morphTargetDictionary);
-                console.log(mesh.morphTargetInfluences);    //----------------------------------------------
+                console.log(mesh);    //----------------------------------------------
 
                 findeye_index();
                 initGui();
@@ -225,7 +225,10 @@
                 let temp=-1;
                 let i=0;
                 for (const key in standardlist) {
-                    if(modelData[key] != -1 && temp != modelData[key]){
+                    if(i >= 37){
+                        morphs.add(controls, key, -1.0, 1.0, 0.01).onChange(onChangeEyesHeadMorph);
+                    }
+                    else if(modelData[key] != -1 && temp != modelData[key]){
                         morphs.add(controls, key, 0.0, 1.0, 0.01).onChange(onChangeMorph);
                     }
                     else{
@@ -235,6 +238,38 @@
                     i++;
                 }
 
+            }
+
+            function onChangeEyesHeadMorph(){
+                let a, b, headMin, headMax;
+                a=-1, b=1, headMin = -15, headMax = 15;
+                //[a, 0, b] <==> [modelData.LXNA, 0, modelData.LXPA]
+                //rotation.x = (b - a) * ((x - min) / (max - min)) + a
+                //左眼
+                mesh.skeleton.bones[leye_index].rotation.x = getIris_Rotation(controls[keys[37]], a, b, modelData.LXNA, modelData.LXPA);
+                mesh.skeleton.bones[leye_index].rotation.y = getIris_Rotation(controls[keys[38]], a, b, modelData.LYNA, modelData.LYPA);
+                //右眼
+                mesh.skeleton.bones[reye_index].rotation.x = getIris_Rotation(controls[keys[37]], a, b, modelData.RXNA, modelData.RXPA);
+                mesh.skeleton.bones[reye_index].rotation.y = getIris_Rotation(controls[keys[38]], a, b, modelData.RYNA, modelData.RYPA);
+                //頭
+                mesh.skeleton.bones[head_index].rotation.x = getIris_Rotation(controls[keys[39]], a, b, headMin, headMax);
+                mesh.skeleton.bones[head_index].rotation.y = getIris_Rotation(controls[keys[40]], a, b, headMin, headMax);
+                mesh.skeleton.bones[head_index].rotation.z = getIris_Rotation(controls[keys[41]], a, b, headMin, headMax);
+
+                function getIris_Rotation(xyz, a, b, min, max){  //將整個調整為[-1, 1]之間
+                    //iris_rotation_x = (b - a) * ((rotation.x - min) / (max - min)) + a;
+                    //(此公式當max != -min時 當xyz = 0，Iris != 0)
+                    min = THREE.MathUtils.degToRad(min);    //角度換算回來
+                    max = THREE.MathUtils.degToRad(max);    //
+                    //以0作為分界 拆開來運算 避免xyz帶0造成錯位
+                    if(xyz > 0){        //[0, 1]  <==> [0, max]
+                        return -(((xyz - 0) / (0 - a)) * (max - 0));
+                    }
+                    else if(xyz < 0){   //[-1, 0] <==> [min, 0]
+                        return ((0 - xyz) / (b - 0)) * (0 - min);
+                    }
+                    return 0;
+                }
             }
 
             function onChangeMorph() {  //----------------改變數值時，直接對modul做更動
