@@ -13,6 +13,10 @@
                 Deform a source mesh to form a target mesh using 3D loss functions</a><br>
 		</div>
 		<div style="position:absolute; top: 15%; left: 50%"><p id="modelNum">iter #0</p></div>
+		<div style="position:absolute; top: 95%; left: 50%">
+			<select id="modelSelect"></select>
+			<button type="button" id="changeModelButton">Load model</button>
+		</div>
 
 		<script src="scoreoutputer.min.js"></script>
 		<script>
@@ -33,7 +37,7 @@
 				so.addChild("場景顯示成果模型", 1, true);
 				so.addChild("執行pytorch3D程式碼產生25個模型", 2, true);
 				so.addChild("可拖動GUI顯示不同階段模型", 3, true);
-				so.addChild("可更換其他模型", 3, false);
+				so.addChild("可更換其他模型", 3, true);
 		
 				//產生自評表，參數如下所示
 				so.renderModal(
@@ -81,9 +85,13 @@
 
 			// The iterations of pytorch3d models
             const models = [0,5,10,20,30,40,50,60,80,100,130,160,190,220,250,300,400,500,600,800,1000,1250,1500,1750,2000];
+			let modelSelect = 0;
+			let modelNameList = ["dolphin", "cow"];
 
 			init();
+			createModelSelect();
 			animate();
+			
 
 			function init() {
 
@@ -116,17 +124,27 @@
 				// PLY model files
                 const loader = new PLYLoader();
 
+				// modelSelect = 0;
 				// Load original model according to model_id
-				loader.load( './models/dolphin.ply', function ( geometry ) {
+				loader.load( './models/' + modelNameList[modelSelect] + '.ply', function ( geometry ) {
 
 					const material = new THREE.MeshPhongMaterial( { color: 0xFF5555, specular: 0x111111, shininess: 200 } );
 					geometry.computeVertexNormals();
 
 					const mesh = new THREE.Mesh( geometry, material );
+					mesh.name = "originPly";
 
-					mesh.position.set( -0.5, -0.5, 0 );
-					mesh.scale.multiplyScalar( 1.5 );
-
+					switch(modelSelect){
+						case 0:
+							mesh.position.set( -0.5, -0.5, 0 );
+							mesh.scale.multiplyScalar( 1.5 );
+							break;
+						case 1:
+							mesh.position.set( -0.5, 0, 0 );
+							mesh.scale.multiplyScalar( 0.5 );
+							break;
+					}
+					
 					mesh.castShadow = true;
 					mesh.receiveShadow = true;
 
@@ -138,7 +156,7 @@
 				
 				// Load models of pytorch3d 
 				// loader.load( './models/dolphin/model_2000.ply', 
-				models.forEach(element => loader.load("./models/dolphin/model_" + element.toString() + ".ply",
+				models.forEach(element => loader.load("./models/" + modelNameList[modelSelect] + "/model_" + element.toString() + ".ply",
 				function ( geometry ) {
 
 					geometry.computeVertexNormals();
@@ -146,15 +164,24 @@
                     const mesh = new THREE.Mesh( geometry, material );
 
                     mesh.name = element;
-					mesh.position.set( 0.5, -0.5, 0 );
-					mesh.scale.multiplyScalar( 1.5 );
+					
+					switch(modelSelect){
+						case 0:
+							mesh.position.set( 0.5, -0.5, 0 );
+							mesh.scale.multiplyScalar( 1.5 );
+							break;
+						case 1:
+							mesh.position.set( 0.5, 0, 0 );
+							mesh.scale.multiplyScalar( 0.5 );
+							break;
+					}
 
                     mesh.castShadow = true;
                     mesh.receiveShadow = true;
 
 					if(element != 0){
 						mesh.visible = false;
-					}				
+					}
 					
                     scene.add( mesh );
                 } ));
@@ -202,6 +229,82 @@
 				//
 				window.addEventListener( 'resize', onWindowResize );
 
+			}
+
+			function createModelSelect(){
+				let guiList = document.getElementById("modelSelect");
+				let guiButton = document.getElementById("changeModelButton");
+				for(let i=0; i < modelNameList.length; i++){
+					guiList.add(new Option(modelNameList[i], i));
+				}
+				guiButton.onclick = function() {
+
+					modelSelect = parseInt(guiList.value);	//取得下拉選單的值 (裡面的值為string 將其轉為int)
+
+					const loader = new PLYLoader();
+
+					// Load original model according to model_id
+					loader.load( './models/' + modelNameList[modelSelect] + '.ply', function ( geometry ) {
+
+						const material = new THREE.MeshPhongMaterial( { color: 0xFF5555, specular: 0x111111, shininess: 200 } );
+						geometry.computeVertexNormals();
+
+						const mesh = new THREE.Mesh( geometry, material );
+						mesh.name = "originPly";
+
+						switch(modelSelect){
+							case 0:
+								mesh.position.set( -0.5, -0.5, 0 );
+								mesh.scale.multiplyScalar( 1.5 );
+								break;
+							case 1:
+								mesh.position.set( -0.5, 0, 0 );
+								mesh.scale.multiplyScalar( 0.5 );
+								break;
+						}
+						
+						mesh.castShadow = true;
+						mesh.receiveShadow = true;
+
+						scene.remove(scene.getObjectByName("originPly"));
+						scene.add( mesh );
+					} );
+
+					// The material for pytorch3d model
+					const material = new THREE.MeshPhongMaterial( { color: 0xAAAAAA, specular: 0x111111, shininess: 200 } );
+					
+					// Load models of pytorch3d 
+					models.forEach(element => loader.load("./models/" + modelNameList[modelSelect] + "/model_" + element.toString() + ".ply",
+					function ( geometry ) {
+
+						geometry.computeVertexNormals();
+
+						const mesh = new THREE.Mesh( geometry, material );
+
+						mesh.name = element;
+						
+						switch(modelSelect){
+							case 0:
+								mesh.position.set( 0.5, -0.5, 0 );
+								mesh.scale.multiplyScalar( 1.5 );
+								break;
+							case 1:
+								mesh.position.set( 0.5, 0, 0 );
+								mesh.scale.multiplyScalar( 0.5 );
+								break;
+						}
+
+						mesh.castShadow = true;
+						mesh.receiveShadow = true;
+
+						if(element != 0){
+							mesh.visible = false;
+						}
+						
+						scene.remove(scene.getObjectByName(element));
+						scene.add( mesh );
+					} ));
+				}
 			}
 
             
